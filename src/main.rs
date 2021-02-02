@@ -126,6 +126,18 @@ fn d4_p1(s: &str) -> Result<()> {
         }
     }
 
+    fn sleepest_min(s: &Vec<Range<u32>>) -> (u32, u32) {
+        let mut freq = [0u32; 60];
+        s.iter().for_each(|x| {
+            for i in x.start..x.end {
+                freq[i as usize] += 1;
+            }
+        });
+
+        let max = freq.iter().enumerate().max_by_key(|&(_, &x)| x).unwrap();
+
+        (max.0 as u32, *max.1)
+    }
 
     // p1
     {
@@ -134,20 +146,22 @@ fn d4_p1(s: &str) -> Result<()> {
             .max_by_key(|&(_id, times)| times.iter().fold(0, |s, x| s + x.end - x.start))
             .unwrap();
 
-        let mut freq = [0u32; 60];
-        sleepest_time.1.iter().for_each(|x| {
-            for i in x.start..x.end {
-                freq[i as usize] += 1;
-            }
-        });
-        let min = freq.iter().enumerate().max_by_key(|&(_, &x)| x).unwrap().0 as u32;
+        let min = sleepest_min(sleepest_time.1).0;
 
         dbg!(min * sleepest_time.0);
     }
 
     // p2
     {
-        
+        let mut records: Vec<(GuardID, (u32, u32))> = Vec::new();
+
+        sleeps.iter().for_each(|(id, times)| {
+            records.push((*id, sleepest_min(times)));
+        });
+
+        let max = records.iter().max_by_key(|&&(_, (_, c))| c).unwrap();
+
+        dbg!(max.0 * max.1.0);
     }
 
     Ok(())
