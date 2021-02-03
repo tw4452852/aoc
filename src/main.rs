@@ -88,13 +88,34 @@ fn main() -> Result<()> {
         d2_p1(&input)?;
         d2_p2(&input)?;
         d3_p1_p2(&input)?;
+        d4_p1_p2(&input)?;
     }
-    d4_p1(&input)?;
+    d5(&input)?;
 
     Ok(())
 }
 
-fn d4_p1(s: &str) -> Result<()> {
+fn d5(s: &str) -> Result<()> {
+    let mut result = String::new();
+
+    for c in s.chars().filter(|x| x.is_ascii_alphabetic()) {    
+        match result.pop() {
+            None => result.push(c),
+            Some(tail) if (tail as i32 - c as i32).abs() == 32 => (),
+            Some(tail) => {
+                result.push(tail);
+                result.push(c);
+            }
+        }
+        
+    }
+
+    dbg!(result.len());
+
+    Ok(())
+}
+
+fn d4_p1_p2(s: &str) -> Result<()> {
     let mut records = vec![];
 
     for line in s.lines() {
