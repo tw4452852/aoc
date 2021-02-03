@@ -96,21 +96,41 @@ fn main() -> Result<()> {
 }
 
 fn d5(s: &str) -> Result<()> {
-    let mut result = String::new();
-
-    for c in s.chars().filter(|x| x.is_ascii_alphabetic()) {    
-        match result.pop() {
-            None => result.push(c),
-            Some(tail) if (tail as i32 - c as i32).abs() == 32 => (),
-            Some(tail) => {
-                result.push(tail);
-                result.push(c);
+    fn fully_react(s: &str) -> usize {
+        let mut result = String::new();
+        for c in s.chars().filter(|x| x.is_ascii_alphabetic()) {
+            match result.pop() {
+                None => result.push(c),
+                Some(tail) if (tail as i32 - c as i32).abs() == 32 => (),
+                Some(tail) => {
+                    result.push(tail);
+                    result.push(c);
+                }
             }
         }
-        
+
+        result.len()
     }
 
-    dbg!(result.len());
+    //p1
+    {
+        dbg!(fully_react(s));
+    }
+
+    //p2
+    {
+        let mut shortest = s.len();
+
+        for c in 'a'..='z' {
+            let s = s.replace(c, "").replace(c.to_ascii_uppercase(), "");
+            let result = fully_react(&s);
+            if result < shortest {
+                shortest = result;
+            }
+        }
+
+        dbg!(shortest);
+    }
 
     Ok(())
 }
@@ -182,7 +202,7 @@ fn d4_p1_p2(s: &str) -> Result<()> {
 
         let max = records.iter().max_by_key(|&&(_, (_, c))| c).unwrap();
 
-        dbg!(max.0 * max.1.0);
+        dbg!(max.0 * max.1 .0);
     }
 
     Ok(())
