@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, ops::Range, str::FromStr};
+use std::{collections::HashMap, error::Error, ops::Range, str::FromStr, vec};
 use std::{
     collections::HashSet,
     io::{stdin, Read},
@@ -89,10 +89,103 @@ fn main() -> Result<()> {
         d2_p2(&input)?;
         d3_p1_p2(&input)?;
         d4_p1_p2(&input)?;
+        d5(&input)?;
     }
-    d5(&input)?;
+    d6(&input)?;
 
     Ok(())
+}
+
+fn d6(s: &str) -> Result<()> {
+    let mut points: Vec<Point> = Vec::new();
+    for line in s.lines() {
+        points.push(line.parse()?);
+    }
+
+    let mut min_x = i32::MAX;
+    let mut min_y = i32::MAX;
+    let mut max_x = 0;
+    let mut max_y = 0;
+    for &Point { x, y } in &points {
+        if x < min_x {
+            min_x = x
+        }
+        if x > max_x {
+            max_x = x
+        }
+        if y < min_y {
+            min_y = y
+        }
+        if y > max_y {
+            max_y = y
+        }
+    }
+
+    fn distance(a: &Point, b: &Point) -> i32 {
+        (a.x - b.x).abs() + (a.y - b.y).abs()
+    }
+
+    fn shortest(p: Point, ps: &Vec<Point>) -> Option<&Point> {
+        let mut shortest_distance = i32::MAX;
+        let mut shortest_points: Vec<&Point> = Vec::new();
+        for a in ps {
+            let dist = distance(a, &p);
+            if dist < shortest_distance {
+                shortest_distance = dist;
+                shortest_points = vec![a];
+            } else if dist == shortest_distance {
+                shortest_points.push(a);
+            }
+        }
+        if shortest_points.len() > 1 {
+            None
+        } else {
+            Some(shortest_points[0])
+        }
+    }
+
+    //d1
+    {
+        let mut infinity: Vec<&Point> = Vec::new();
+        let mut all_points: HashMap<Point, u32> = HashMap::new();
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                if let Some(p) = shortest(Point { x, y }, &points) {
+                    *all_points.entry(*p).or_default() += 1;
+                    if x == min_x || x == max_x || y == min_y || y == max_y {
+                        infinity.push(p);
+                    }
+                }
+            }
+        }
+        let result = all_points
+            .iter()
+            .filter(|&(p, _)| !infinity.contains(&p))
+            .max_by_key(|&(_, size)| size)
+            .unwrap()
+            .1;
+        dbg!(result);
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl FromStr for Point {
+    type Err = Box<dyn Error>;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let xy: Vec<&str> = s.split(',').map(str::trim).collect();
+        Ok(Point {
+            x: xy[0].parse()?,
+            y: xy[1].parse()?,
+        })
+    }
 }
 
 fn d5(s: &str) -> Result<()> {
