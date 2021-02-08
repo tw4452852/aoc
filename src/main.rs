@@ -121,12 +121,12 @@ fn d6(s: &str) -> Result<()> {
         }
     }
 
-    fn distance(a: &Point, b: &Point) -> i32 {
-        (a.x - b.x).abs() + (a.y - b.y).abs()
+    fn distance(a: &Point, b: &Point) -> u32 {
+        (a.x - b.x).abs() as u32 + (a.y - b.y).abs() as u32
     }
 
     fn shortest(p: Point, ps: &Vec<Point>) -> Option<&Point> {
-        let mut shortest_distance = i32::MAX;
+        let mut shortest_distance = u32::MAX;
         let mut shortest_points: Vec<&Point> = Vec::new();
         for a in ps {
             let dist = distance(a, &p);
@@ -144,7 +144,7 @@ fn d6(s: &str) -> Result<()> {
         }
     }
 
-    //d1
+    //p1
     {
         let mut infinity: Vec<&Point> = Vec::new();
         let mut all_points: HashMap<Point, u32> = HashMap::new();
@@ -165,6 +165,19 @@ fn d6(s: &str) -> Result<()> {
             .unwrap()
             .1;
         dbg!(result);
+    }
+
+    //p2
+    {
+        let mut distances: HashMap<Point, u32> = HashMap::new();
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                let p = Point { x, y };
+                distances.insert(p, points.iter().fold(0u32, |s, e| s + distance(&p, e)));
+            }
+        }
+
+        dbg!(distances.iter().filter(|&(_, c)| c < &10000).count());
     }
 
     Ok(())
