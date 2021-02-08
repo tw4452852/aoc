@@ -90,10 +90,85 @@ fn main() -> Result<()> {
         d3_p1_p2(&input)?;
         d4_p1_p2(&input)?;
         d5(&input)?;
+        d6(&input)?;
     }
-    d6(&input)?;
+    d7(&input)?;
 
     Ok(())
+}
+
+fn d7(s: &str) -> Result<()> {
+    let mut all_steps: HashMap<char, Vec<char>> = HashMap::new();
+
+    for line in s.lines() {
+        let Dep(name, next) = line.parse()?;
+        all_steps.entry(name).or_default().push(next);
+    }
+
+    fn find_next(remain: &HashMap<char, Vec<char>>, done: &str) -> Option<char> {
+        let mut candidates: HashSet<char> = HashSet::new();
+        let mut not_ready: HashSet<char> = HashSet::new();
+        let done = done.chars().collect::<Vec<char>>();
+
+        for (name, nexts) in remain {
+            if !done.contains(name) {
+                candidates.insert(*name);
+                not_ready.extend(nexts);
+            } else {
+                for n in nexts {
+                    candidates.insert(*n);
+                }
+            }
+        }
+        candidates
+            .iter()
+            .filter(|x| !done.contains(x))
+            .filter(|x| !not_ready.contains(x))
+            .fold(None, |current, c| {
+                if let Some(current) = current {
+                    if current < *c {
+                        Some(current)
+                    } else {
+                        Some(*c)
+                    }
+                } else {
+                    Some(*c)
+                }
+            })
+    }
+
+    //p1
+    {
+        let mut seq = String::new();
+        while let Some(c) = find_next(&all_steps, &seq) {
+            seq.push(c);
+        }
+        dbg!(seq);
+    }
+    Ok(())
+}
+
+struct Dep(char, char);
+
+impl FromStr for Dep {
+    type Err = Box<dyn Error>;
+
+    fn from_str(s: &str) -> Result<Self> {
+        lazy_static! {
+            static ref RE: Regex =
+                Regex::new(r"Step (\w) must be finished before step (\w) can begin.").unwrap();
+        }
+
+        let group = match RE.captures(s) {
+            Some(group) => group,
+            None => return Err(Box::<dyn Error>::from(format!("capture failed"))),
+        };
+
+        Ok(Dep(
+            group[1].chars().nth(0).unwrap(),
+            group[2].chars().nth(0).unwrap(),
+        ))
+    }
 }
 
 fn d6(s: &str) -> Result<()> {
