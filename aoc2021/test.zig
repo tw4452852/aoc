@@ -7,4 +7,5 @@ test {
     _ = @import("d6.zig");
     _ = @import("d7.zig");
     _ = @import("d8.zig");
+    _ = @import("d9.zig");
 }
