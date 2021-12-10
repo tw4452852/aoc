@@ -8,4 +8,5 @@ test {
     _ = @import("d7.zig");
     _ = @import("d8.zig");
     _ = @import("d9.zig");
+    _ = @import("d10.zig");
 }
