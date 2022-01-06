@@ -9,12 +9,12 @@ const Entry = struct {
 
     const Self = @This();
 
-    pub fn compare(a: Self, b: Self) std.math.Order {
+    pub fn compare(_: void, a: Self, b: Self) std.math.Order {
         return std.math.order(a.cost, b.cost);
     }
 };
 
-const Queue = std.PriorityDequeue(Entry, Entry.compare);
+const Queue = std.PriorityDequeue(Entry, void, Entry.compare);
 
 const Map = struct {
     base: []const u8,
@@ -91,7 +91,7 @@ test "d15" {
 }
 
 fn walk(map: Map) !u64 {
-    var q = Queue.init(std.testing.allocator);
+    var q = Queue.init(std.testing.allocator, {});
     defer q.deinit();
     try q.add(.{ .x = 0, .y = 0, .cost = 0 });
 

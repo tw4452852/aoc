@@ -4,7 +4,7 @@ const print = std.debug.print;
 
 test "d4" {
     const input = @embedFile("input/d4");
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenize(u8, input, "\r\n");
 
     const firstLine = it.next().?;
     var inputNums = std.ArrayList(isize).init(std.testing.allocator);

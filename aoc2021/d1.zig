@@ -4,7 +4,7 @@ const print = std.debug.print;
 
 test "d1" {
     const input = @embedFile("input/d1");
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenize(u8, input, "\n\r");
     var numbers = std.ArrayList(isize).init(std.testing.allocator);
     defer numbers.deinit();
     var prev = try fmt.parseInt(isize, it.next().?, 10);

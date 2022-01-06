@@ -4,7 +4,7 @@ const print = std.debug.print;
 
 test "d6" {
     const input = @embedFile("input/d6");
-    var it = std.mem.tokenize(u8, input, ",\n");
+    var it = std.mem.tokenize(u8, input, ",\r\n");
 
     var counts = [_]u64{0} ** 9;
 

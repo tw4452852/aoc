@@ -4,7 +4,7 @@ const print = std.debug.print;
 
 test "d2" {
     const input = @embedFile("input/d2");
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenize(u8, input, "\n\r");
 
     var depth: isize = 0;
     var horizon: isize = 0;

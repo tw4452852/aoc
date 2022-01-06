@@ -4,7 +4,7 @@ const print = std.debug.print;
 
 test "d3" {
     const input = @embedFile("input/d3");
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenize(u8, input, "\r\n");
 
     const width = 12;
     var stat = std.mem.zeroes([width]isize);

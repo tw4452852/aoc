@@ -4,7 +4,7 @@ const print = std.debug.print;
 
 test "d5" {
     const input = @embedFile("input/d5");
-    var it = std.mem.tokenize(u8, input, "\n");
+    var it = std.mem.tokenize(u8, input, "\r\n");
 
     var map1 = std.AutoHashMap(Point, isize).init(std.testing.allocator);
     defer map1.deinit();

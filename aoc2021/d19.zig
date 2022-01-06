@@ -3,7 +3,7 @@ const fmt = std.fmt;
 const print = std.debug.print;
 
 test "d19" {
-    const input = @embedFile("input/sample");
+    const input = @embedFile("input/d19");
     var it = std.mem.tokenize(u8, input, "\n\r");
 
     var scanners = std.ArrayList(Scanner).init(std.testing.allocator);
@@ -92,11 +92,11 @@ const Line = struct {
 const Scanner = struct {
     ps: std.ArrayList(Point),
     ls: std.ArrayList(Line),
-    allocator: *std.mem.Allocator,
+    allocator: std.mem.Allocator,
 
     const Self = @This();
 
-    fn init(allocator: *std.mem.Allocator) Self {
+    fn init(allocator: std.mem.Allocator) Self {
         return .{
             .ps = std.ArrayList(Point).init(allocator),
             .ls = std.ArrayList(Line).init(allocator),
