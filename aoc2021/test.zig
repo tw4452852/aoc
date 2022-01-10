@@ -20,4 +20,5 @@ test {
     _ = @import("d19.zig");
     _ = @import("d20.zig");
     _ = @import("d21.zig");
+    _ = @import("d22.zig");
 }
