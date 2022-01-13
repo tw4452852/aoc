@@ -4,10 +4,13 @@ const print = std.debug.print;
 
 test "d23" {
     var p1: usize = 0;
-    var pending = Queue.init(std.testing.allocator, {});
-    defer pending.deinit();
+    var p2: usize = 0;
+    var pending1 = Queue.init(std.testing.allocator, {});
+    defer pending1.deinit();
+    var pending2 = Queue.init(std.testing.allocator, {});
+    defer pending2.deinit();
 
-    const state: State = .{
+    const state1: State = .{
         .amps = .{
             .{ .cost = 1, .cur = .{ .x = -3, .y = -1 }, .dst_x = -3 },
             .{ .cost = 1, .cur = .{ .x = 3, .y = -1 }, .dst_x = -3 },
@@ -17,26 +20,68 @@ test "d23" {
             .{ .cost = 100, .cur = .{ .x = 3, .y = -2 }, .dst_x = 1 },
             .{ .cost = 1000, .cur = .{ .x = -1, .y = -2 }, .dst_x = 3 },
             .{ .cost = 1000, .cur = .{ .x = -3, .y = -2 }, .dst_x = 3 },
+
+            .{ .cost = 1, .cur = .{ .x = -3, .y = -3 }, .dst_x = -3, .done = true },
+            .{ .cost = 1, .cur = .{ .x = -3, .y = -3 }, .dst_x = -3, .done = true },
+            .{ .cost = 10, .cur = .{ .x = -1, .y = -3 }, .dst_x = -1, .done = true },
+            .{ .cost = 10, .cur = .{ .x = -1, .y = -4 }, .dst_x = -1, .done = true },
+            .{ .cost = 100, .cur = .{ .x = 1, .y = -3 }, .dst_x = 1, .done = true },
+            .{ .cost = 100, .cur = .{ .x = 1, .y = -4 }, .dst_x = 1, .done = true },
+            .{ .cost = 1000, .cur = .{ .x = 3, .y = -4 }, .dst_x = 3, .done = true },
+            .{ .cost = 1000, .cur = .{ .x = 3, .y = -4 }, .dst_x = 3, .done = true },
         },
     };
-    try pending.add(.{ .state = state, .cost = 0 });
+    const state2: State = .{
+        .amps = .{
+            .{ .cost = 1, .cur = .{ .x = -3, .y = -1 }, .dst_x = -3 },
+            .{ .cost = 1, .cur = .{ .x = 3, .y = -1 }, .dst_x = -3 },
+            .{ .cost = 1, .cur = .{ .x = 3, .y = -2 }, .dst_x = -3 },
+            .{ .cost = 1, .cur = .{ .x = 1, .y = -3 }, .dst_x = -3 },
+            .{ .cost = 10, .cur = .{ .x = 1, .y = -1 }, .dst_x = -1 },
+            .{ .cost = 10, .cur = .{ .x = 1, .y = -2 }, .dst_x = -1 },
+            .{ .cost = 10, .cur = .{ .x = -1, .y = -3 }, .dst_x = -1 },
+            .{ .cost = 10, .cur = .{ .x = 1, .y = -4 }, .dst_x = -1 },
+            .{ .cost = 100, .cur = .{ .x = -1, .y = -1 }, .dst_x = 1 },
+            .{ .cost = 100, .cur = .{ .x = -1, .y = -2 }, .dst_x = 1 },
+            .{ .cost = 100, .cur = .{ .x = 3, .y = -3 }, .dst_x = 1 },
+            .{ .cost = 100, .cur = .{ .x = 3, .y = -4 }, .dst_x = 1 },
+            .{ .cost = 1000, .cur = .{ .x = -3, .y = -2 }, .dst_x = 3 },
+            .{ .cost = 1000, .cur = .{ .x = -3, .y = -3 }, .dst_x = 3 },
+            .{ .cost = 1000, .cur = .{ .x = -3, .y = -4 }, .dst_x = 3 },
+            .{ .cost = 1000, .cur = .{ .x = -1, .y = -4 }, .dst_x = 3 },
+        },
+    };
+    try pending1.add(.{ .state = state1, .cost = 0 });
+    try pending2.add(.{ .state = state2, .cost = 0 });
 
-    var memo = std.AutoHashMap(State, usize).init(std.testing.allocator);
-    defer memo.deinit();
-    try memo.put(state, 0);
+    var memo1 = std.AutoHashMap(State, usize).init(std.testing.allocator);
+    defer memo1.deinit();
+    var memo2 = std.AutoHashMap(State, usize).init(std.testing.allocator);
+    defer memo2.deinit();
+    try memo1.put(state1, 0);
+    try memo2.put(state2, 0);
 
-    while (pending.removeMinOrNull()) |entry| {
+    while (pending1.removeMinOrNull()) |*entry| {
         if (entry.state.is_solved()) {
             p1 = entry.cost;
             break;
         }
-        const min_cost = memo.get(entry.state).?;
+        const min_cost = memo1.get(entry.state).?;
         if (entry.cost > min_cost) continue;
-
-        try entry.state.go(&pending, &memo);
+        try entry.state.go(&pending1, &memo1, -2);
     }
 
-    print("part1 = {}\n", .{p1});
+    while (pending2.removeMinOrNull()) |*entry| {
+        if (entry.state.is_solved()) {
+            p2 = entry.cost;
+            break;
+        }
+        const min_cost = memo2.get(entry.state).?;
+        if (entry.cost > min_cost) continue;
+        try entry.state.go(&pending2, &memo2, -4);
+    }
+
+    print("part1 = {}, part2 = {}\n", .{ p1, p2 });
 }
 
 const QE = struct {
@@ -50,7 +95,7 @@ const QE = struct {
 const Queue = std.PriorityDequeue(QE, void, QE.order);
 
 const State = struct {
-    amps: [8]Amp,
+    amps: [16]Amp,
 
     const Self = @This();
 
@@ -69,7 +114,7 @@ const State = struct {
         return sum;
     }
 
-    fn go(self: *Self, pending: *Queue, memo: *std.AutoHashMap(State, usize)) !void {
+    fn go(self: *Self, pending: *Queue, memo: *std.AutoHashMap(State, usize), depth: i8) !void {
         var map = std.AutoHashMap(Pos, *const Amp).init(std.testing.allocator);
         defer map.deinit();
         for (self.amps) |*amp| {
@@ -79,35 +124,24 @@ const State = struct {
         // find a way to move
         // firstly, check we can move to zoom
         for (self.amps) |*amp, i| {
-            if (amp.done or amp.cur.y != 0) continue;
+            if (amp.done) continue;
 
-            const dst1: Pos = .{ .x = amp.dst_x, .y = -2 };
-            if (map.get(dst1)) |ent1| {
-                if (!ent1.done) continue;
-                const dst2: Pos = .{ .x = amp.dst_x, .y = -1 };
-                if (map.get(dst2) == null) {
-                    if (is_way_clear(&map, amp.cur, dst2)) {
-                        const copy = amp.moveTo(dst2);
+            var y = depth;
+            while (y < 0) : (y += 1) {
+                const dst: Pos = .{ .x = amp.dst_x, .y = y };
+                if (map.get(dst)) |ent| {
+                    if (!ent.done) break;
+                } else {
+                    if (is_way_clear(&map, amp.cur, dst)) {
                         var state_copy = self.*;
-                        state_copy.amps[i] = copy;
+                        state_copy.amps[i] = amp.moveTo(dst);
                         const c = state_copy.cost();
                         const gop = try memo.getOrPut(state_copy);
                         if (!gop.found_existing or gop.value_ptr.* > c) {
                             gop.value_ptr.* = c;
                             try pending.add(.{ .state = state_copy, .cost = c });
                         }
-                    }
-                }
-            } else {
-                if (is_way_clear(&map, amp.cur, dst1)) {
-                    const copy = amp.moveTo(dst1);
-                    var state_copy = self.*;
-                    state_copy.amps[i] = copy;
-                    const c = state_copy.cost();
-                    const gop = try memo.getOrPut(state_copy);
-                    if (!gop.found_existing or gop.value_ptr.* > c) {
-                        gop.value_ptr.* = c;
-                        try pending.add(.{ .state = state_copy, .cost = c });
+                        break;
                     }
                 }
             }
@@ -117,13 +151,39 @@ const State = struct {
         for (self.amps) |*amp, i| {
             if (amp.done or amp.cur.y == 0) continue;
 
-            var x: i8 = -5;
+            const base_x = amp.cur.x;
+            if (!is_way_clear(&map, amp.cur, .{ .x = base_x, .y = 0 })) continue;
+            const min_x = blk: {
+                var x = base_x - 1;
+                while (x >= -5) : (x -= 1) {
+                    if (map.get(.{ .x = x, .y = 0 })) |ent| {
+                        std.debug.assert(ent.dst_x != x);
+                        if (ent.dst_x < x or ent.dst_x == amp.dst_x or amp.dst_x > x) break :blk x + 1;
+                        break :blk ent.dst_x + 1;
+                    }
+                }
+                break :blk -5;
+            };
+            const max_x = blk: {
+                var x = base_x + 1;
+                while (x <= 5) : (x += 1) {
+                    if (map.get(.{ .x = x, .y = 0 })) |ent| {
+                        std.debug.assert(ent.dst_x != x);
+                        if (ent.dst_x > x or ent.dst_x == amp.dst_x or amp.dst_x < x) break :blk x - 1;
+                        break :blk ent.dst_x - 1;
+                    }
+                }
+                break :blk 5;
+            };
+            if (min_x > max_x) continue;
 
-            while (x <= 5) : (x += 1) {
+            var x = min_x;
+
+            while (x <= max_x) : (x += 1) {
                 if (x == amp.cur.x) continue;
                 const dst: Pos = .{ .x = x, .y = 0 };
 
-                if (is_way_clear(&map, amp.cur, dst)) {
+                if ((x != -1 and x != -3 and x != 1 and x != 3)) {
                     var state_copy = self.*;
                     state_copy.amps[i] = amp.moveTo(dst);
                     const c = state_copy.cost();
