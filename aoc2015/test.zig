@@ -5,4 +5,5 @@ test {
     _ = @import("d4.zig");
     _ = @import("d5.zig");
     _ = @import("d6.zig");
+    _ = @import("d7.zig");
 }
