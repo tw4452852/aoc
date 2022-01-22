@@ -18,77 +18,47 @@ test "d19" {
         }
     }
 
-    var dup = std.ArrayList(Dup).init(std.testing.allocator);
-    defer dup.deinit();
-    for (rules.items) |a, ai| {
-        if (a.to.len > a.from.len and std.mem.startsWith(u8, a.to, a.from)) {
-            const suffix = a.to[a.from.len..];
-            for (rules.items) |b, bi| {
-                if (bi != ai and b.to.len > b.from.len and
-                    std.mem.endsWith(u8, b.to, b.from))
-                {
-                    const prefix = b.to[0 .. b.to.len - b.from.len];
-                    if (std.mem.eql(u8, suffix, prefix)) {
-                        try dup.append(.{ .start = a.from, .middle = suffix, .end = b.from });
-                    }
-                }
-            }
-        }
+    var map = std.StringHashMap(void).init(std.testing.allocator);
+    defer {
+        var keys = map.keyIterator();
+        while (keys.next()) |k| std.testing.allocator.free(k.*);
+        map.deinit();
     }
-
-    var memo = std.StringHashMap(usize).init(std.testing.allocator);
-    defer memo.deinit();
-
-    var p1: usize = 0;
     for (rules.items) |r| {
-        if (memo.get(r.from)) |n| {
-            p1 += n;
-            continue;
+        var i: usize = 0;
+        while (std.mem.indexOfPos(u8, s, i, r.from)) |idx| {
+            i = idx + 1;
+            const k = try fmt.allocPrint(std.testing.allocator, "{s}{s}{s}", .{ s[0..idx], r.to, s[idx + r.from.len ..] });
+            if (!map.contains(k)) {
+                try map.put(k, {});
+            } else std.testing.allocator.free(k);
         }
-        const n = std.mem.count(u8, s, r.from);
-        p1 += n;
-        try memo.put(r.from, n);
     }
-    for (dup.items) |d| {
-        const n = findAllDup(s, d);
-        p1 -= n;
-    }
-    print("part1 = {}\n", .{p1});
-}
+    const p1 = map.count();
 
-fn findAllDup(s: []const u8, d: Dup) usize {
-    var ret: usize = 0;
-    var start_i: usize = 0;
-    var end_i: usize = 0;
-
-    while (std.mem.indexOfPos(u8, s, start_i, d.start)) |i| {
-        start_i = i + 1;
-        end_i = i + 1;
-        while (std.mem.indexOfPos(u8, s, end_i, d.end)) |j| {
-            end_i = j + d.end.len;
-            if (i + d.start.len >= j) {
-                ret += 1;
-                continue;
+    std.sort.sort(Replace, rules.items, {}, Replace.lessThan);
+    var sl = std.ArrayList(u8).init(std.testing.allocator);
+    defer sl.deinit();
+    try sl.insertSlice(0, s);
+    var p2: usize = 0;
+    loop: while (true) {
+        for (rules.items) |r| {
+            while (std.mem.indexOf(u8, sl.items, r.to)) |i| {
+                try sl.replaceRange(i, r.to.len, r.from);
+                p2 += 1;
             }
-            const mid = s[i + d.start.len .. j];
-            if (mid.len % d.middle.len != 0) continue;
-            const n = mid.len / d.middle.len;
-            if (std.mem.containsAtLeast(u8, mid, n, d.middle)) {
-                ret += 1;
-            }
+            if (std.mem.eql(u8, sl.items, "e")) break :loop;
         }
     }
 
-    return ret;
+    print("part1 = {}, part2 = {}\n", .{ p1, p2 });
 }
 
 const Replace = struct {
     from: []const u8,
     to: []const u8,
-};
 
-const Dup = struct {
-    start: []const u8,
-    middle: []const u8,
-    end: []const u8,
+    fn lessThan(_: void, a: @This(), b: @This()) bool {
+        return a.to.len > b.to.len;
+    }
 };
